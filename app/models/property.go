@@ -1,22 +1,26 @@
 package models
 
 import "time"
+import "github.com/lib/pq"
 
 type Property struct {
-	ID        uint `gorm:"primary_key"`
-	Title     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	UUID      string         `json:"uuid"`
+	Title     string         `json:"title"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	TimeSlots pq.StringArray `gorm:"type:varchar(100)[]"` // Property has_many timeSlots
 }
 
 type PropertyJSON struct {
-	ID    uint   `json:"id"`
-	Title string `json:"title"`
+	UUID      string   `json:"uuid"`
+	Title     string   `json:"title"`
+	TimeSlots []string `json:"time_slots"`
 }
 
 func (property *Property) ToJSON() PropertyJSON {
 	return PropertyJSON{
-		ID:    property.ID,
-		Title: property.Title,
+		UUID:      property.UUID,
+		Title:     property.Title,
+		TimeSlots: property.TimeSlots,
 	}
 }

@@ -1,66 +1,27 @@
 package controllers
 
 import (
-	"github.com/benhawker/go-json-api/app"
 	"github.com/benhawker/go-json-api/app/models"
-	// "github.com/benhawker/go-json-api/app/repository"
+	"github.com/benhawker/go-json-api/app/services"
 	"github.com/revel/revel"
 )
 
 type PropertiesController struct {
 	*revel.Controller
+	services.Database
 }
 
 func (c PropertiesController) Index() revel.Result {
-	var properties []models.Property
-	app.Gorm.Preload("Properties").Order("date asc")
+	// property := models.Property{UUID: "a1b2c3d4", Title: "Test", TimeSlots: []string{"1", "2", "3", "4"}}
+	// c.Gorm.NewRecord(property) // => returns `true` as primary key is blank
+	// c.Gorm.Create(&property)
+	// c.Gorm.NewRecord(property) // => return `false` after `user` created
 
-	propertiesJSON := make([]models.PropertyJSON, len(properties))
+	properties := make([]models.Property, 0)
 
-	for i := range properties {
-		propertiesJSON[i] = properties[i].ToJSON()
+	if err := c.Gorm.Find(&properties).Error; err != nil {
+		panic("Houston")
+		panic(err)
 	}
-
-	return c.RenderJSON(propertiesJSON)
+	return c.RenderJSON(properties)
 }
-
-// func (c PropertiesController) GetPropertyById(id string) revel.Result {
-
-// 	user, err := repository.GetPropertyRepository().GetPropertyById(id)
-
-// 	response := JsonResponse{}
-// 	response.Success = err == nil
-// 	response.Data = user
-// 	if err != nil {
-// 		response.Error = err.Error()
-// 	}
-
-// 	return c.RenderJson(response)
-// }
-
-// func (c PropertiesController) GetProperties() revel.Result {
-
-// 	users := repository.GetPropertyRepository().GetProperties()
-
-// 	response := JsonResponse{}
-// 	response.Data = users
-
-// 	return c.RenderJson(response)
-// }
-
-// func (c PropertiesController) SaveProperty(id, title string) revel.Result {
-
-// 	user := &models.Property{
-// 		Id:    id,
-// 		Title: title,
-// 	}
-
-// 	err := repository.GetPropertyRepository().SaveProperty(user)
-
-// 	response := JsonResponse{}
-// 	response.Success = err == nil
-// 	if err != nil {
-// 		response.Error = err.Error()
-// 	}
-// 	return c.RenderJson(response)
-// }

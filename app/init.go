@@ -1,13 +1,8 @@
 package app
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/lib/pq"
 	"github.com/revel/revel"
 )
-
-var Gorm *gorm.DB
 
 func init() {
 	// Filters is the default set of global filters.
@@ -26,27 +21,10 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
-	// Register startup functions with OnAppStart
-	// revel.DevMode and revel.RunMode only work inside of OnAppStart. See Example Startup Script
-	// ( order dependent )
-	// revel.OnAppStart(ExampleStartupScript)
-	revel.OnAppStart(InitDB)
-	// revel.OnAppStart(FillCache)
+	// Example job scheduling.
+	// jobs.Schedule("@midnight", nightly.ReminderEmails{})
 }
 
-func InitDB() {
-	var err error
-	Gorm, err = gorm.Open(revel.Config.StringDefault("db.driver", ""), revel.Config.StringDefault("db.spec", ""))
-	if err != nil {
-		revel.INFO.Println("DB Error", err)
-	}
-	Gorm.LogMode(true)
-	revel.INFO.Println("DB Connected")
-}
-
-// HeaderFilter adds common security headers
-// There is a full implementation of a CSRF filter in
-// https://github.com/revel/modules/tree/master/csrf
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	c.Response.Out.Header().Add("X-Frame-Options", "SAMEORIGIN")
 	c.Response.Out.Header().Add("X-XSS-Protection", "1; mode=block")
