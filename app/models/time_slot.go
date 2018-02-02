@@ -1,28 +1,15 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type TimeSlot struct {
-	UUID       string `json:"uuid"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	TimeOfSlot time.Time
-
-	// PropertyID is foreign key on timeSlot.
-	Property     Property
-	PropertyUUID string
-}
-
-type TimeSlotJSON struct {
-	UUID         string    `json:"uuid"`
+	UUID         string    `sql:"type:uuid;primary_key" json:"uuid"`
+	DateTime     time.Time `json:"datetime"`
+	Available    bool      `json:"available"`
 	PropertyUUID string    `json:"property_uuid"`
-	TimeOfSlot   time.Time `json:"time_of_slot`
-}
 
-func (timeSlot *TimeSlot) ToJSON() TimeSlotJSON {
-	return TimeSlotJSON{
-		UUID:         timeSlot.UUID,
-		PropertyUUID: timeSlot.PropertyUUID,
-		TimeOfSlot:   timeSlot.TimeOfSlot,
-	}
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -6,9 +6,12 @@
 module:testrunner
 # module:jobs
 
-GET     /                   			 App.Index
-GET     /properties 							 PropertiesController.Index
-GET     /time_slots 							 TimeSlotsController.Index
+GET     /                   			   App.Index
+GET     /properties 							 	 PropertiesController.Index
+GET     /properties/:uuid						 PropertiesController.Show
+
+GET     /properties/:uuid/time_slots TimeSlotsController.Index
+
 
 # Ignore favicon requests
 GET     /favicon.ico                            404

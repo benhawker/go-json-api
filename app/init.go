@@ -5,7 +5,6 @@ import (
 )
 
 func init() {
-	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
 		revel.PanicFilter,             // Recover from panics and display an error page instead.
 		revel.RouterFilter,            // Use the routing table to select the right Action
@@ -20,9 +19,6 @@ func init() {
 		revel.CompressFilter,          // Compress the result.
 		revel.ActionInvoker,           // Invoke the action.
 	}
-
-	// Example job scheduling.
-	// jobs.Schedule("@midnight", nightly.ReminderEmails{})
 }
 
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {

@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	// "fmt"
 	"github.com/benhawker/go-json-api/app/models"
 	"github.com/benhawker/go-json-api/app/services"
 	"github.com/revel/revel"
+	"net/http"
 )
 
 type PropertiesController struct {
@@ -12,16 +14,21 @@ type PropertiesController struct {
 }
 
 func (c PropertiesController) Index() revel.Result {
-	// property := models.Property{UUID: "a1b2c3d4", Title: "Test", TimeSlots: []string{"1", "2", "3", "4"}}
-	// c.Gorm.NewRecord(property) // => returns `true` as primary key is blank
-	// c.Gorm.Create(&property)
-	// c.Gorm.NewRecord(property) // => return `false` after `user` created
-
 	properties := make([]models.Property, 0)
 
 	if err := c.Gorm.Find(&properties).Error; err != nil {
-		panic("Houston")
 		panic(err)
 	}
 	return c.RenderJSON(properties)
+}
+
+func (c PropertiesController) Show(uuid string) revel.Result {
+	property := models.Property{}
+	c.Gorm.Where("uuid = ?", uuid).First(&property)
+
+	if property.UUID == "" {
+		c.Response.Status = http.StatusNotFound
+		return c.RenderJSON("Property Not Found")
+	}
+	return c.RenderJSON(property)
 }
