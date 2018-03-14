@@ -6,9 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/revel/revel"
-	"github.com/satori/go.uuid"
-	"strconv"
-	"time"
+	"github.com/lib/pq"
 )
 
 type Database struct {
@@ -20,7 +18,7 @@ func ConnectToDatabase() *gorm.DB {
 		"host=%s user=%s dbname=%s sslmode=%s password=%s",
 		"localhost",
 		"benh",
-		"gojsonapi",
+		"gojsonapitest",
 		"disable",
 		"password")
 
@@ -36,10 +34,11 @@ func ConnectToDatabase() *gorm.DB {
 
 func InitDB() {
 	db := ConnectToDatabase()
-	db.DropTableIfExists(&models.Property{}, &models.TimeSlot{})
-	db.CreateTable(&models.TimeSlot{})
-	db.CreateTable(&models.Property{})
-	db.AutoMigrate(&models.Property{}, &models.TimeSlot{})
+	db.DropTableIfExists(&models.User{}, &models.Friendship{}, &models.NotificationSubscription{})
+	db.CreateTable(&models.Friendship{})
+	db.CreateTable(&models.User{})
+	db.CreateTable(&models.NotificationSubscription{})
+	db.AutoMigrate(&models.User{}, &models.Friendship{}, &models.NotificationSubscription{})
 
 	seedDB(db)
 	db.Close()
@@ -47,50 +46,61 @@ func InitDB() {
 
 func seedDB(db *gorm.DB) {
 	for i := 0; i < 5; i++ {
-		createProperty(db, i)
+		createUser(db, i)
+		createFriendships(db, i)
+		createNotificationSubs(db, i)
+		createBlock(db, i)
 	}
 }
 
-func createProperty(db *gorm.DB, i int) {
-	uuid, err := uuid.NewV4()
-
-	if err != nil {
-		panic(err)
-	}
-
-	propertyUUID := uuid.String()
-
-	property := models.Property{UUID: propertyUUID, Title: fmt.Sprintf("Test Property %s", strconv.Itoa(i)), Description: "Another great test property", PostalCode: fmt.Sprintf("SW19 %sAB", strconv.Itoa(i)), PricePerMonth: 1000}
-	db.NewRecord(property)
-	db.Create(&property)
-	db.NewRecord(property)
+func createUser(db *gorm.DB, i int) {
+	user := models.User{Email: "test@email.com", BlockedList: bl}
+	db.NewRecord(user)
+	db.Create(&user)
+	db.NewRecord(user)
 
 	// Create 3 timeSlots per property
-	for j := 0; j < 3; j++ {
-		createTimeSlot(db, i, propertyUUID)
-	}
+	// for j := 0; j < 3; j++ {
+	// 	createTimeSlot(db, i, propertyUUID)
+	// }
 	return
 }
 
-func createTimeSlot(db *gorm.DB, i int, propertyUUID string) {
-	exampleTime, err := time.Parse(time.RFC822, "21 Feb 18 10:00 UTC")
-	if err != nil {
-		panic(err)
-	}
-
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		panic(err)
-	}
-
-	tsUUID := uuid.String()
-
-	ts := models.TimeSlot{UUID: tsUUID, DateTime: exampleTime, Available: true, PropertyUUID: propertyUUID}
-	db.NewRecord(ts)
-	db.Create(&ts)
-	db.NewRecord(ts)
+func createFriendships(db *gorm.DB, i int) {
+	f := models.Friendship{RequesterId: i, ReceiverId: i+1 }
+	db.NewRecord(f)
+	db.Create(&f)
+	db.NewRecord(f)
 	return
 }
+
+
+func createNotificationSubs(db *gorm.DB, i int) {
+	ns := models.NotificationSubscription{SubscriberId: i, PublisherId: i+1 }
+	db.NewRecord(ns)
+	db.Create(&ns)
+	db.NewRecord(ns)
+	return
+}
+
+
+func createBlock(db *gorm.DB, i int) {
+	b := models.Block{RequesterId: i, BlockedId: i+1 }
+	db.NewRecord(b)
+	db.Create(&b)
+	db.NewRecord(b)
+	return
+}
+
+
+// func createTimeSlot(db *gorm.DB, i int, propertyUUID string) {
+
+// 	ts := models.TimeSlot{UUID: tsUUID, DateTime: exampleTime, Available: true, PropertyUUID: propertyUUID}
+// 	db.NewRecord(ts)
+// 	db.Create(&ts)
+// 	db.NewRecord(ts)
+// 	return
+// }
 
 func (c *Database) Open() revel.Result {
 	c.Gorm = ConnectToDatabase()
