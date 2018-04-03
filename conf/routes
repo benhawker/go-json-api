@@ -10,6 +10,7 @@ GET     /                   			   App.Index
 
 GET     /users							 	 UsersController.Index
 GET     /friendships 						 FriendshipsController.Index
+POST     /friendships 						 FriendshipsController.Create
 GET     /notification_subscriptions 	     NotificationSubscriptionsController.Index
 
 
