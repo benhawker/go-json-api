@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/revel/revel"
-	"github.com/lib/pq"
+	// "github.com/lib/pq"
 )
 
 type Database struct {
@@ -38,6 +38,7 @@ func InitDB() {
 	db.CreateTable(&models.Friendship{})
 	db.CreateTable(&models.User{})
 	db.CreateTable(&models.NotificationSubscription{})
+	db.CreateTable(&models.Block{})
 	db.AutoMigrate(&models.User{}, &models.Friendship{}, &models.NotificationSubscription{})
 
 	seedDB(db)
@@ -54,7 +55,8 @@ func seedDB(db *gorm.DB) {
 }
 
 func createUser(db *gorm.DB, i int) {
-	user := models.User{Email: "test@email.com", BlockedList: bl}
+	// user := models.User{Email: "test@email.com", BlockedList: bl}
+	user := models.User{Email: "test@email.com"}
 	db.NewRecord(user)
 	db.Create(&user)
 	db.NewRecord(user)
@@ -67,31 +69,28 @@ func createUser(db *gorm.DB, i int) {
 }
 
 func createFriendships(db *gorm.DB, i int) {
-	f := models.Friendship{RequesterId: i, ReceiverId: i+1 }
+	f := models.Friendship{RequesterId: i, ReceiverId: i + 1}
 	db.NewRecord(f)
 	db.Create(&f)
 	db.NewRecord(f)
 	return
 }
 
-
 func createNotificationSubs(db *gorm.DB, i int) {
-	ns := models.NotificationSubscription{SubscriberId: i, PublisherId: i+1 }
+	ns := models.NotificationSubscription{SubscriberId: i, PublisherId: i + 1}
 	db.NewRecord(ns)
 	db.Create(&ns)
 	db.NewRecord(ns)
 	return
 }
 
-
 func createBlock(db *gorm.DB, i int) {
-	b := models.Block{RequesterId: i, BlockedId: i+1 }
+	b := models.Block{RequesterId: i, BlockedId: i + 1}
 	db.NewRecord(b)
 	db.Create(&b)
 	db.NewRecord(b)
 	return
 }
-
 
 // func createTimeSlot(db *gorm.DB, i int, propertyUUID string) {
 

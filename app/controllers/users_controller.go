@@ -17,5 +17,11 @@ func (c UsersController) Index() revel.Result {
 	if err := c.Gorm.Find(&users).Error; err != nil {
 		panic(err)
 	}
-	return c.RenderJSON(users)
+
+	json := make([]models.UserJSON, 0)
+	for _, u := range users {
+		json = append(json, models.NewUserJSON(u))
+	}
+
+	return c.RenderJSON(json)
 }

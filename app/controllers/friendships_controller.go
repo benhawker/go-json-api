@@ -15,18 +15,17 @@ type FriendshipsController struct {
 func (c FriendshipsController) Index() revel.Result {
 	f := make([]models.Friendship, 0)
 
-	// if err := c.Gorm.Find(&users).Error; err != nil {
-	// 	panic(err)
-	// }
+	if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 1, 2).Find(&f).Error; err != nil {
+		panic(err)
+	}
 
-	c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 1, 2).Find(&f)
-	// 	panic(err)
-	// }
-	return c.RenderJSON(f)
+	json := make([]models.FriendshipJSON, 0)
+	for _, friendship := range f {
+		json = append(json, models.NewFriendshipJSON(friendship))
+	}
+
+	return c.RenderJSON(json)
 }
-
-
-
 
 // func (c PropertiesController) Show() revel.Result {
 // 	users := make([]models.User, 0)
@@ -36,9 +35,6 @@ func (c FriendshipsController) Index() revel.Result {
 // 	}
 // 	return c.RenderJSON(users)
 // }
-
-
-
 
 // func (c PropertiesController) Show(uuid string) revel.Result {
 // 	property := models.Property{}

@@ -12,12 +12,15 @@ type NotificationSubscriptionsController struct {
 }
 
 func (c NotificationSubscriptionsController) Index() revel.Result {
-	f := make([]models.Friendship, 0)
+	ns := make([]models.NotificationSubscription, 0)
 
-	 c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 1, 2).Find(&f)
-	// 		panic(err)
-	// }
-	return c.RenderJSON(f)
+	if err := c.Gorm.Where("subscriber_id = ? OR publisher_id = ? ", 1, 2).Find(&ns).Error; err != nil {
+		panic(err)
+	}
+
+	json := make([]models.NotificationSubscriptionJSON, 0)
+	for _, n := range ns {
+		json = append(json, models.NewNotificationSubscriptionJSON(n))
+	}
+	return c.RenderJSON(json)
 }
-
-
