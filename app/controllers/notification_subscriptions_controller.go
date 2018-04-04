@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/benhawker/go-json-api/app/models"
 	"github.com/benhawker/go-json-api/app/services"
@@ -28,10 +28,9 @@ func (c NotificationSubscriptionsController) Index() revel.Result {
 	return c.RenderJSON(json)
 }
 
-
 type NSRequestBody struct {
-  Requestor string `json:"requestor"`
-  Target string `json:"target"`
+	Requestor string `json:"requestor"`
+	Target    string `json:"target"`
 }
 
 // Expected request body:
@@ -39,29 +38,37 @@ type NSRequestBody struct {
 //   "requestor": "lisa@example.com",
 //   "target": "john@example.com"
 // }
-
 func (c NotificationSubscriptionsController) Create() revel.Result {
-  var requestBody NSRequestBody
-  c.Params.BindJSON(&requestBody)
-  user := models.User{}
+	var requestBody NSRequestBody
+	c.Params.BindJSON(&requestBody)
 
-  // Check requester exists
-  if err := c.Gorm.Where("email = ?", requestBody.Requestor).First(&user).Error; err != nil {
-    c.Response.Status = http.StatusBadRequest
-    return c.RenderJSON(fmt.Sprintf("We don't recognise the requesting user: %s", requestBody.Requestor))
-  }
+	requestor := models.User{}
+	target := models.User{}
 
-  // Check receiver exists
-  if err := c.Gorm.Where("email = ?", requestBody.Target).First(&user).Error; err != nil {
-    c.Response.Status = http.StatusBadRequest
-    return c.RenderJSON(fmt.Sprintf("We don't recognise the target user: %s", requestBody.Target))
-  }
+	// Check requester exists
+	if err := c.Gorm.Where("email = ?", requestBody.Requestor).First(&requestor).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We don't recognise the requesting user: %s", requestBody.Requestor))
+	}
 
-  // Create the Notification Subscription
-  // TODO
+	// Check receiver exists
+	if err := c.Gorm.Where("email = ?", requestBody.Target).First(&target).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We don't recognise the target user: %s", requestBody.Target))
+	}
 
-  // Render 200
-  success := map[string]bool{"success": true}
-  c.Response.Status = http.StatusOK
-  return c.RenderJSON(success)
+	// Create the Notification Subscription
+	ns := models.NotificationSubscription{
+		SubscriberId: int(requestor.Id),
+		PublisherId:  int(target.Id),
+	}
+
+	if err := c.Gorm.Create(&ns).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We could not save your Notification Subscription Request. Error Message: %s", err))
+	}
+
+	// Render 200
+	c.Response.Status = http.StatusOK
+	return c.RenderJSON(ResponseBody{true})
 }

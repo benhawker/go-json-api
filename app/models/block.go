@@ -6,12 +6,11 @@ import (
 
 type Block struct {
 	Id          uint      `gorm:"primary_key" json:"id"`
-	RequesterId int       `json:"requested_id"`
+	RequesterId int       `json:"requester_id"`
 	BlockedId   int       `json:"blocked_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-
-	// Plus add an index on requester and receiver.
+	// Plus add an index on requester and blocked.
 }
 
 type BlockJSON struct {

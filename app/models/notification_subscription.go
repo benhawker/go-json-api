@@ -10,8 +10,7 @@ type NotificationSubscription struct {
 	PublisherId  int       `json:"publisher_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
-
-	// Plus add an index on requester and receiver.
+	// Plus add an index on subscriber and publisher.
 }
 
 type NotificationSubscriptionJSON struct {

@@ -34,37 +34,48 @@ func ConnectToDatabase() *gorm.DB {
 
 func InitDB() {
 	db := ConnectToDatabase()
-	db.DropTableIfExists(&models.User{}, &models.Friendship{}, &models.NotificationSubscription{})
-	db.CreateTable(&models.Friendship{})
+
+	db.DropTableIfExists(
+		&models.User{},
+		&models.Friendship{},
+		&models.NotificationSubscription{},
+		&models.Block{},
+		&models.Message{},
+	)
+
 	db.CreateTable(&models.User{})
+	db.CreateTable(&models.Friendship{})
 	db.CreateTable(&models.NotificationSubscription{})
 	db.CreateTable(&models.Block{})
-	db.AutoMigrate(&models.User{}, &models.Friendship{}, &models.NotificationSubscription{})
+	db.CreateTable(&models.Message{})
+
+	db.AutoMigrate(
+		&models.User{},
+		&models.Friendship{},
+		&models.NotificationSubscription{},
+		&models.Block{},
+		&models.Message{},
+	)
 
 	seedDB(db)
 	db.Close()
 }
 
 func seedDB(db *gorm.DB) {
-	for i := 0; i < 5; i++ {
+	for i := 1; i <= 6; i++ {
 		createUser(db, i)
 		createFriendships(db, i)
 		createNotificationSubs(db, i)
 		createBlock(db, i)
 	}
+
+	u := models.User{Email: "no_friends@email.com"}
+	db.Create(&u)
 }
 
 func createUser(db *gorm.DB, i int) {
-	// user := models.User{Email: "test@email.com", BlockedList: bl}
-	user := models.User{Email: "test@email.com"}
-	db.NewRecord(user)
+	user := models.User{Email: fmt.Sprintf("test_%v@email.com", i)}
 	db.Create(&user)
-	db.NewRecord(user)
-
-	// Create 3 timeSlots per property
-	// for j := 0; j < 3; j++ {
-	// 	createTimeSlot(db, i, propertyUUID)
-	// }
 	return
 }
 
@@ -91,15 +102,6 @@ func createBlock(db *gorm.DB, i int) {
 	db.NewRecord(b)
 	return
 }
-
-// func createTimeSlot(db *gorm.DB, i int, propertyUUID string) {
-
-// 	ts := models.TimeSlot{UUID: tsUUID, DateTime: exampleTime, Available: true, PropertyUUID: propertyUUID}
-// 	db.NewRecord(ts)
-// 	db.Create(&ts)
-// 	db.NewRecord(ts)
-// 	return
-// }
 
 func (c *Database) Open() revel.Result {
 	c.Gorm = ConnectToDatabase()

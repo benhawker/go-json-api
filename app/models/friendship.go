@@ -10,7 +10,6 @@ type Friendship struct {
 	ReceiverId  int       `json:"receiver_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-
 	// Plus add an index on requester and receiver.
 }
 

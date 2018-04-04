@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/benhawker/go-json-api/app/models"
 	"github.com/benhawker/go-json-api/app/services"
 	"github.com/revel/revel"
@@ -15,13 +17,15 @@ func (c UsersController) Index() revel.Result {
 	users := make([]models.User, 0)
 
 	if err := c.Gorm.Find(&users).Error; err != nil {
+		c.Response.Status = http.StatusNotFound
 		c.RenderJSON(err)
 	}
 
-	json := make([]models.UserJSON, 0)
+	usersJson := make([]models.UserJSON, 0)
 	for _, u := range users {
-		json = append(json, models.NewUserJSON(u))
+		usersJson = append(usersJson, models.NewUserJSON(u))
 	}
 
-	return c.RenderJSON(json)
+	c.Response.Status = http.StatusOK
+	return c.RenderJSON(usersJson)
 }

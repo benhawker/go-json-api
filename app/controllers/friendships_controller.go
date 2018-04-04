@@ -1,38 +1,37 @@
 package controllers
 
 import (
-  "net/http"
+	"net/http"
 
-  "fmt"
-  "github.com/benhawker/go-json-api/app/models"
-  "github.com/benhawker/go-json-api/app/services"
-  "github.com/revel/revel"
-
+	"fmt"
+	"github.com/benhawker/go-json-api/app/models"
+	"github.com/benhawker/go-json-api/app/services"
+	"github.com/revel/revel"
 )
 
 type FriendshipsController struct {
-  *revel.Controller
-  services.Database
+	*revel.Controller
+	services.Database
 }
 
 func (c FriendshipsController) Index() revel.Result {
-  f := make([]models.Friendship, 0)
+	f := make([]models.Friendship, 0)
 
-  if err := c.Gorm.Find(&f).Error; err != nil {
-    // if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 999, 888).Find(&f).Error; err != nil {
-    panic(err)
-  }
+	if err := c.Gorm.Find(&f).Error; err != nil {
+		c.Response.Status = http.StatusNotFound
+		return c.RenderJSON(err)
+	}
 
-  json := make([]models.FriendshipJSON, 0)
-  for _, friendship := range f {
-    json = append(json, models.NewFriendshipJSON(friendship))
-  }
+	json := make([]models.FriendshipJSON, 0)
+	for _, friendship := range f {
+		json = append(json, models.NewFriendshipJSON(friendship))
+	}
 
-  return c.RenderJSON(json)
+	return c.RenderJSON(json)
 }
 
 // GET http://localhost:9000/friendships/test@email.com
-
+//
 // Expected response body:
 //
 // {
@@ -41,65 +40,57 @@ func (c FriendshipsController) Index() revel.Result {
 //     [
 //       'john@example.com'
 //     ],
-//   "count" : 1   
+//   "count" : 1
 // }
-
-// type Response struct {
-//   Code    int    `json:"code"`
-//   Body    ShowBody `json:"message"`
-// }
-
-
-type Response struct {
-  Success bool `json:"success"`
-  Friends []string `json:"friends"`
-  Count int `json:"count"`
+//
+type FriendshipResponse struct {
+	Success bool     `json:"success"`
+	Friends []string `json:"friends"`
+	Count   int      `json:"count"`
 }
-
 
 func (c FriendshipsController) Show(email string) revel.Result {
-  user := models.User{}
+	user := models.User{}
 
-  if err := c.Gorm.Where("email = ?", email).First(&user).Error; err != nil {
-    c.Response.Status = http.StatusNotFound
-    return c.RenderJSON(fmt.Sprintf("We have no user by this email: %s", email))
-  }
+	if err := c.Gorm.Where("email = ?", email).First(&user).Error; err != nil {
+		c.Response.Status = http.StatusNotFound
+		return c.RenderJSON(fmt.Sprintf("We have no user by this email: %s", email))
+	}
 
-  friendships := make([]models.Friendship, 0)
-  if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", user.Id, user.Id).Find(&friendships).Error; err != nil {
-    panic(err)
-  }
+	friendships := make([]models.Friendship, 0)
+	if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", user.Id, user.Id).Find(&friendships).Error; err != nil {
+		return c.RenderJSON(err)
+	}
 
-  userIds := []int{}
-  for _, f := range friendships {
-    if user.Id != uint(f.ReceiverId) {
-      userIds = append(userIds, f.ReceiverId)
-    }
+	userIds := []int{}
+	for _, f := range friendships {
+		if user.Id != uint(f.ReceiverId) {
+			userIds = append(userIds, f.ReceiverId)
+		}
 
-    if user.Id != uint(f.ReceiverId) {
-      userIds = append(userIds, f.RequesterId)
-    }
-  }
+		if user.Id != uint(f.RequesterId) {
+			userIds = append(userIds, f.RequesterId)
+		}
+	}
 
-  users := make([]models.User, 0)
-  if err := c.Gorm.Where("id in (?)", userIds).Find(&users).Error; err != nil {
-    c.RenderJSON(err)
-  }
+	users := make([]models.User, 0)
+	if err := c.Gorm.Where("id in (?)", userIds).Find(&users).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		c.RenderJSON(err)
+	}
 
-  emails := []string{}
-  for _, u := range users {
-    emails = append(emails, u.Email)
-  }
+	emails := []string{}
+	for _, u := range users {
+		emails = append(emails, u.Email)
+	}
 
-
-  response := Response{Success: true, Friends: emails, Count: len(users)}
-  return c.RenderJSON(response)
+	// Render 200
+	c.Response.Status = http.StatusOK
+	return c.RenderJSON(FriendshipResponse{Success: true, Friends: emails, Count: len(users)})
 }
 
-
-
 type RequestBody struct {
-  Friends []string `json:"friends"`
+	Friends []string `json:"friends"`
 }
 
 // Expected request body:
@@ -111,27 +102,40 @@ type RequestBody struct {
 //     ]
 // }
 func (c FriendshipsController) Create() revel.Result {
-  var requestBody RequestBody
-  c.Params.BindJSON(&requestBody)
-  user := models.User{}
+	var requestBody RequestBody
+	c.Params.BindJSON(&requestBody)
 
-  // Check requester exists
-  if err := c.Gorm.Where("email = ?", requestBody.Friends[0]).First(&user).Error; err != nil {
-    c.Response.Status = http.StatusBadRequest
-    return c.RenderJSON(fmt.Sprintf("We don't recognise the requesting user: %s", requestBody.Friends[0]))
-  }
+	requestor := models.User{}
+	receiver := models.User{}
 
-  // Check receiver exists
-  if err := c.Gorm.Where("email = ?", requestBody.Friends[1]).First(&user).Error; err != nil {
-    c.Response.Status = http.StatusBadRequest
-    return c.RenderJSON(fmt.Sprintf("We don't recognise the receiving user: %s", requestBody.Friends[1]))
-  }
+	// Check requester exists
+	if err := c.Gorm.Where("email = ?", requestBody.Friends[0]).First(&requestor).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We don't recognise the requesting user: %s", requestBody.Friends[0]))
+	}
 
-  //Create the Friendship
-  // TODO
+	// Check receiver exists
+	if err := c.Gorm.Where("email = ?", requestBody.Friends[1]).First(&receiver).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We don't recognise the receiving user: %s", requestBody.Friends[1]))
+	}
 
-  // Render 200
-  success := map[string]bool{"success": true}
-  c.Response.Status = http.StatusOK
-  return c.RenderJSON(success)
+	// If the user is blocked then the friends connection cannot be made.
+	block := models.Block{}
+	c.Gorm.Where("requester_id = ? AND blocked_id = ?", requestor.Id, receiver.Id).First(&block)
+	if block == (models.Block{}) {
+		c.Response.Status = http.StatusForbidden
+		return c.RenderJSON(fmt.Sprintf("The receiver of this friend request has blocked the requestor"))
+	}
+
+	//Create the Friendship
+	friendship := models.Friendship{RequesterId: int(requestor.Id), ReceiverId: int(receiver.Id)}
+	if err := c.Gorm.Create(&friendship).Error; err != nil {
+		c.Response.Status = http.StatusBadRequest
+		return c.RenderJSON(fmt.Sprintf("We could not save your Friend Request. Error Message: %s", err))
+	}
+
+	// Render 200
+	c.Response.Status = http.StatusOK
+	return c.RenderJSON(ResponseBody{true})
 }
