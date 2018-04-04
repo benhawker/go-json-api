@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/revel/revel/testing"
+	"github.com/revel/revel/testing"
 )
 
 type AppTest struct {
@@ -10,12 +11,6 @@ type AppTest struct {
 
 func (t *AppTest) Before() {
 	println("Set up")
-}
-
-func (t *AppTest) TestThatIndexPageWorks() {
-	t.Get("/")
-	t.AssertOk()
-	t.AssertContentType("text/html; charset=utf-8")
 }
 
 func (t *AppTest) After() {
