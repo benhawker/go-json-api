@@ -1,53 +1,108 @@
 package controllers
 
 import (
-	// "fmt"
-	"github.com/benhawker/go-json-api/app/models"
-	"github.com/benhawker/go-json-api/app/services"
-	"github.com/revel/revel"
+  "net/http"
+
+  "fmt"
+  "github.com/benhawker/go-json-api/app/models"
+  "github.com/benhawker/go-json-api/app/services"
+  "github.com/revel/revel"
+
 )
 
 type FriendshipsController struct {
-	*revel.Controller
-	services.Database
+  *revel.Controller
+  services.Database
 }
 
 func (c FriendshipsController) Index() revel.Result {
-	f := make([]models.Friendship, 0)
+  f := make([]models.Friendship, 0)
 
-	if err := c.Gorm.Find(&f).Error; err != nil {
-		// if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 999, 888).Find(&f).Error; err != nil {
-		panic(err)
-	}
+  if err := c.Gorm.Find(&f).Error; err != nil {
+    // if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", 999, 888).Find(&f).Error; err != nil {
+    panic(err)
+  }
 
-	json := make([]models.FriendshipJSON, 0)
-	for _, friendship := range f {
-		json = append(json, models.NewFriendshipJSON(friendship))
-	}
+  json := make([]models.FriendshipJSON, 0)
+  for _, friendship := range f {
+    json = append(json, models.NewFriendshipJSON(friendship))
+  }
 
-	return c.RenderJSON(json)
+  return c.RenderJSON(json)
 }
 
-// func (c PropertiesController) Show() revel.Result {
-// 	users := make([]models.User, 0)
+// GET http://localhost:9000/friendships/test@email.com
 
-// 	if err := c.Gorm.Find(&users).Error; err != nil {
-// 		panic(err)
-// 	}
-// 	return c.RenderJSON(users)
+// Expected response body:
+//
+// {
+//   "success": true,
+//   "friends" :
+//     [
+//       'john@example.com'
+//     ],
+//   "count" : 1   
 // }
 
-// func (c PropertiesController) Show(uuid string) revel.Result {
-// 	property := models.Property{}
-// 	c.Gorm.Where("uuid = ?", uuid).First(&property)
-
-// 	if property.UUID == "" {
-// 		c.Response.Status = http.StatusNotFound
-// 		return c.RenderJSON("Property Not Found")
-// 	}
-// 	return c.RenderJSON(property)
+// type Response struct {
+//   Code    int    `json:"code"`
+//   Body    ShowBody `json:"message"`
 // }
 
+
+type Response struct {
+  Success bool `json:"success"`
+  Friends []string `json:"friends"`
+  Count int `json:"count"`
+}
+
+
+func (c FriendshipsController) Show(email string) revel.Result {
+  user := models.User{}
+
+  if err := c.Gorm.Where("email = ?", email).First(&user).Error; err != nil {
+    c.Response.Status = http.StatusNotFound
+    return c.RenderJSON(fmt.Sprintf("We have no user by this email: %s", email))
+  }
+
+  friendships := make([]models.Friendship, 0)
+  if err := c.Gorm.Where("requester_id = ? OR receiver_id = ? ", user.Id, user.Id).Find(&friendships).Error; err != nil {
+    panic(err)
+  }
+
+  userIds := []int{}
+  for _, f := range friendships {
+    if user.Id != uint(f.ReceiverId) {
+      userIds = append(userIds, f.ReceiverId)
+    }
+
+    if user.Id != uint(f.ReceiverId) {
+      userIds = append(userIds, f.RequesterId)
+    }
+  }
+
+  users := make([]models.User, 0)
+  if err := c.Gorm.Where("id in (?)", userIds).Find(&users).Error; err != nil {
+    c.RenderJSON(err)
+  }
+
+  emails := []string{}
+  for _, u := range users {
+    emails = append(emails, u.Email)
+  }
+
+
+  response := Response{Success: true, Friends: emails, Count: len(users)}
+  return c.RenderJSON(response)
+}
+
+
+
+type RequestBody struct {
+  Friends []string `json:"friends"`
+}
+
+// Expected request body:
 // {
 //   friends:
 //     [
@@ -55,50 +110,28 @@ func (c FriendshipsController) Index() revel.Result {
 //       'john@example.com'
 //     ]
 // }
-
-type RequestBody struct {
-	Friends []string `json:"friends"`
-}
-
 func (c FriendshipsController) Create() revel.Result {
-	var jsonData RequestBody
-	c.Params.BindJSON(&jsonData)
+  var requestBody RequestBody
+  c.Params.BindJSON(&requestBody)
+  user := models.User{}
 
-	users := make([]models.User, 0)
+  // Check requester exists
+  if err := c.Gorm.Where("email = ?", requestBody.Friends[0]).First(&user).Error; err != nil {
+    c.Response.Status = http.StatusBadRequest
+    return c.RenderJSON(fmt.Sprintf("We don't recognise the requesting user: %s", requestBody.Friends[0]))
+  }
 
-	// Check requester exists
-	// req := models.User{Email: jsonData.Friends[0]}
-	if err := c.Gorm.Where("email = ?", jsonData.Friends[0]).Find(&users).Error; err != nil {
-		return c.RenderJSON("We don't recognise the requesting user.")
-	}
+  // Check receiver exists
+  if err := c.Gorm.Where("email = ?", requestBody.Friends[1]).First(&user).Error; err != nil {
+    c.Response.Status = http.StatusBadRequest
+    return c.RenderJSON(fmt.Sprintf("We don't recognise the receiving user: %s", requestBody.Friends[1]))
+  }
 
-	if len(users) == 0 {
-		return c.RenderJSON("No users")
-	}
+  //Create the Friendship
+  // TODO
 
-	// Check receiver exists
-	// rec := models.User{Email: jsonData.Friends[1]}
-	// if err := c.Gorm.Find(&rec).Error; err != nil {
-	// 	return c.RenderJSON("We don't recognise the receiving user.")
-	// }
-
-	success := map[string]bool{"success": true}
-	return c.RenderJSON(success)
-
-	// if err := c.Gorm.Find(&users).Error; err != nil {
-	// 	panic(err)
-	// }
-
-	// f := models.Friendship{RequesterId: 999, ReceiverId: 888}
-
-	// if err := c.Gorm.Create(&f).Error; err != nil {
-	// 	return c.RenderJSON("custom error msg.")
-	// }
-
-	// // json := make([]models.FriendshipJSON, 0)
-	// // for _, friendship := range f {
-	// // 	json = append(json, models.NewFriendshipJSON(friendship))
-	// // }
-
-	// return c.RenderJSON(f)
+  // Render 200
+  success := map[string]bool{"success": true}
+  c.Response.Status = http.StatusOK
+  return c.RenderJSON(success)
 }
