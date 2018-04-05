@@ -12,6 +12,10 @@ A high-productivity web framework for the [Go language](http://www.golang.org/).
     "It works"
 
 
+# build and run the image
+docker build -t sp .
+docker run -it -p 9000:9000 sp
+
 ### Future Approach
 
 Having worked through this I would simplify the approach in the future 
