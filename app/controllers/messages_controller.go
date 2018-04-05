@@ -60,7 +60,6 @@ func (c MessagesController) Create() revel.Result {
 	}
 
 	userIds := []int{}
-
 	// Include friends
 	for _, f := range friendships {
 		if sender.Id != uint(f.ReceiverId) {
@@ -83,34 +82,36 @@ func (c MessagesController) Create() revel.Result {
 	r := regexp.MustCompile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+")
 	matches := r.FindAllString(requestBody.Text, -1)
 
-	fmt.Println(matches)
-
-	user := models.User{}
-	for _, email := range matches {
-		if err := c.Gorm.Where("email = ?", email).First(&user).Error; err != nil {
-			c.Response.Status = http.StatusNotFound
-			return c.RenderJSON(fmt.Sprintf("We don't recognise an email in your text: %s", email))
-		}
-
-		userIds = append(userIds, int(user.Id))
-	}
-
-	// TODO: Remove Blocked Users
-	// blocks := make([]models.Block{}, 0)
-	// for _, uid := range userIds {
-	// 	if err := c.Gorm.Select("requester_id").Where("requester_id = ? AND blocked_id", uid, sender.Id).Find(&blocks).Error; err != nil {
-	// 		// Handle error
-	// 		fmt.Println("User(s) was blocked - and removed.")
-	// 	}
-	// }
-
-	// Get User records.
 	users := make([]models.User, 0)
-	if err := c.Gorm.Where("id in (?)", userIds).Find(&users).Error; err != nil {
+	if err := c.Gorm.Where("email in (?)", matches).Find(&users).Error; err != nil {
+		c.Response.Status = http.StatusInternalServerError
 		c.RenderJSON(err)
 	}
 
-	fmt.Println(userIds)
+	for _, u := range users {
+		userIds = append(userIds, int(u.Id))
+	}
+
+	blocks := make([]models.Block, 0)
+	if err := c.Gorm.Where("blocked_id = ?", sender.Id).Find(&blocks).Error; err != nil {
+		c.Response.Status = http.StatusInternalServerError
+		c.RenderJSON(err)
+	}
+
+	blockerIds := []int{}
+	for _, b := range blocks {
+		blockerIds = append(blockerIds, b.RequesterId)
+	}
+
+	for _, id := range blockerIds {
+		userIds = removeElement(userIds, id)
+	}
+
+	// Get User records.
+	users = make([]models.User, 0)
+	if err := c.Gorm.Where("id in (?)", userIds).Find(&users).Error; err != nil {
+		c.RenderJSON(err)
+	}
 
 	// Create emails slice and append.
 	emails := []string{}
@@ -130,7 +131,18 @@ func (c MessagesController) Create() revel.Result {
 		return c.RenderJSON(fmt.Sprintf("We could not send your message. Error Message: %s", err))
 	}
 
-	// Render 200
+	// Render 200 OK.
 	c.Response.Status = http.StatusOK
 	return c.RenderJSON(MessageResponseBody{true, emails})
+}
+
+func removeElement(nums []int, val int) []int {
+	j := 0
+	for _, v := range nums {
+		if v != val {
+			nums[j] = v
+			j++
+		}
+	}
+	return nums[:j]
 }

@@ -71,6 +71,12 @@ func seedDB(db *gorm.DB) {
 
 	u := models.User{Email: "no_friends@email.com"}
 	db.Create(&u)
+
+	b := models.Block{RequesterId: 2, BlockedId: 1}
+	db.Create(&b)
+
+	b = models.Block{RequesterId: 3, BlockedId: 1}
+	db.Create(&b)
 }
 
 func createUser(db *gorm.DB, i int) {

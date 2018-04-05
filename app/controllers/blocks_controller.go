@@ -14,6 +14,17 @@ type BlocksController struct {
 	services.Database
 }
 
+func (c BlocksController) Index() revel.Result {
+	b := make([]models.Block, 0)
+
+	if err := c.Gorm.Find(&b).Error; err != nil {
+		c.Response.Status = http.StatusNotFound
+		return c.RenderJSON(err)
+	}
+
+	return c.RenderJSON(b)
+}
+
 // Expected request body:
 // {
 //   "requestor": "andy@example.com",

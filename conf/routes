@@ -16,6 +16,7 @@ POST    /friendships 						 					 FriendshipsController.Create
 
 POST    /messages 						 						 MessagesController.Create
 
+GET    /blocks 						 							 	 BlocksController.Index
 POST    /blocks 						 							 BlocksController.Create
 
 GET     /notification_subscriptions 	     NotificationSubscriptionsController.Index
