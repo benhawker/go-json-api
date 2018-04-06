@@ -1,34 +1,78 @@
-# Welcome to Revel
+# Social Application - Go
 
-A high-productivity web framework for the [Go language](http://www.golang.org/).
+Technology choices:
+* [Go](https://golang.org/)
+* [Revel](https://revel.github.io/). A chance to experiment with a new framework.
+* [PostgreSQL](https://www.postgresql.org/)
+
+### Setup the application
+
+Install Go
+```
+brew install go
+```
+
+You'll also need to ensure your GOPATH is setup correctly.
+
+Install Revel and Command Line Tools.
+```
+go get github.com/revel/revel
+go get github.com/revel/cmd/revel
+```
+
+You may also need to ensure the `revel` cmd is in your $PATH. [See Revel guides here](https://revel.github.io/tutorial/gettingstarted.html)
+
+Install Gorm
+```
+go get github.com/jinzhu/gorm
+```
+
+Install PQ
+```
+go get github.com/lib/pq
+```
+
+CLone the repo
+```
+git@github.com:benhawker/go-json-api.git
+```
+
+cd into the directory
+```
+$ /go-json-api
+```
+
+Run the application
+```
+revel run
+```
 
 
-### Start the web server:
+### Other Approaches
 
-   revel run myapp
+Another approach may include using a Table that makes use of Single Table Inheritance. Example:
 
-### Go to http://localhost:9000/ and you'll see:
-
-    "It works"
-
-
-# build and run the image
-docker build -t sp .
-docker run -it -p 9000:9000 sp
-
-### Future Approach
-
-Having worked through this I would simplify the approach in the future 
-Refactor using STI
-
+```
 UserRelationship
 ====
 RelatingUserID
 RelatedUserID
-Type[friend, block, etc]
+Type[friendship, block, notification_subscription etc]
+```
+
+For the purposes of the user stories defined here, another approach could have included using a noSQL DB that includes `User` documents with the below approach. 
+
+```
+Users
+====
+Email
+Friends []
+Subscribers []
+etc ...
+```
 
 
-#### User Stories
+### User Stories
 
 **1. As a user, I need an API to create a friend connection between two email addresses.**
 
@@ -79,14 +123,10 @@ The API should return the following JSON response on success:
 
 The API should receive the following JSON request:
 
+
 ```
-{
-  friends:
-    [
-      'andy@example.com',
-      'john@example.com'
-    ]
-}
+TODO: STILL TO BE IMPLEMENTED
+GET localhost:9000/friendships/common?friends=[andy@example.com,john@example.com]
 ```
 
 The API should return the following JSON response on success:

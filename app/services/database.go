@@ -69,7 +69,7 @@ func seedDB(db *gorm.DB) {
 		createBlock(db, i)
 	}
 
-	u := models.User{Email: "no_friends@email.com"}
+	u := models.User{Email: "no_friendships@email.com"}
 	db.Create(&u)
 
 	b := models.Block{RequesterId: 2, BlockedId: 1}

@@ -6,21 +6,16 @@
 module:testrunner
 # module:jobs
 
-GET     /                   			         App.Index
-
-GET     /users							 	             UsersController.Index
-
-GET     /friendships 						           FriendshipsController.Index
-GET     /friendships/:email					       FriendshipsController.Show
-POST    /friendships 						 					 FriendshipsController.Create
-
-POST    /messages 						 						 MessagesController.Create
-
-GET    /blocks 						 							 	 BlocksController.Index
-POST    /blocks 						 							 BlocksController.Create
-
-GET     /notification_subscriptions 	     NotificationSubscriptionsController.Index
-POST    /notification_subscriptions 	     NotificationSubscriptionsController.Create
+GET     /                           App.Index
+GET     /users                      UsersController.Index
+GET     /friendships                FriendshipsController.Index
+GET     /friendships/:email         FriendshipsController.Show
+POST    /friendships                FriendshipsController.Create
+POST    /messages                   MessagesController.Create
+GET     /blocks                     BlocksController.Index
+POST    /blocks                     BlocksController.Create
+GET     /notification_subscriptions NotificationSubscriptionsController.Index
+POST    /notification_subscriptions NotificationSubscriptionsController.Create
 
 
 # Ignore favicon requests
