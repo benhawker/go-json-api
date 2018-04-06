@@ -6,12 +6,21 @@
 module:testrunner
 # module:jobs
 
-GET     /                   			   App.Index
-GET     /properties 							 	 PropertiesController.Index
-GET     /properties/:uuid						 PropertiesController.Show
+GET     /                   			         App.Index
 
-GET     /properties/:uuid/time_slots TimeSlotsController.Index
-POST    /time_slots                  TimeSlotsController.Create
+GET     /users							 	             UsersController.Index
+
+GET     /friendships 						           FriendshipsController.Index
+GET     /friendships/:email					       FriendshipsController.Show
+POST    /friendships 						 					 FriendshipsController.Create
+
+POST    /messages 						 						 MessagesController.Create
+
+GET    /blocks 						 							 	 BlocksController.Index
+POST    /blocks 						 							 BlocksController.Create
+
+GET     /notification_subscriptions 	     NotificationSubscriptionsController.Index
+POST    /notification_subscriptions 	     NotificationSubscriptionsController.Create
 
 
 # Ignore favicon requests

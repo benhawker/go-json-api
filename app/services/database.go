@@ -6,9 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/revel/revel"
-	"github.com/satori/go.uuid"
-	"strconv"
-	"time"
+	// "github.com/lib/pq"
 )
 
 type Database struct {
@@ -20,7 +18,7 @@ func ConnectToDatabase() *gorm.DB {
 		"host=%s user=%s dbname=%s sslmode=%s password=%s",
 		"localhost",
 		"benh",
-		"gojsonapi",
+		"gojsonapitest",
 		"disable",
 		"password")
 
@@ -36,59 +34,78 @@ func ConnectToDatabase() *gorm.DB {
 
 func InitDB() {
 	db := ConnectToDatabase()
-	db.DropTableIfExists(&models.Property{}, &models.TimeSlot{})
-	db.CreateTable(&models.TimeSlot{})
-	db.CreateTable(&models.Property{})
-	db.AutoMigrate(&models.Property{}, &models.TimeSlot{})
+
+	db.DropTableIfExists(
+		&models.User{},
+		&models.Friendship{},
+		&models.NotificationSubscription{},
+		&models.Block{},
+		&models.Message{},
+	)
+
+	db.CreateTable(&models.User{})
+	db.CreateTable(&models.Friendship{})
+	db.CreateTable(&models.NotificationSubscription{})
+	db.CreateTable(&models.Block{})
+	db.CreateTable(&models.Message{})
+
+	db.AutoMigrate(
+		&models.User{},
+		&models.Friendship{},
+		&models.NotificationSubscription{},
+		&models.Block{},
+		&models.Message{},
+	)
 
 	seedDB(db)
 	db.Close()
 }
 
 func seedDB(db *gorm.DB) {
-	for i := 0; i < 5; i++ {
-		createProperty(db, i)
+	for i := 1; i <= 6; i++ {
+		createUser(db, i)
+		createFriendships(db, i)
+		createNotificationSubs(db, i)
+		createBlock(db, i)
 	}
+
+	u := models.User{Email: "no_friends@email.com"}
+	db.Create(&u)
+
+	b := models.Block{RequesterId: 2, BlockedId: 1}
+	db.Create(&b)
+
+	b = models.Block{RequesterId: 3, BlockedId: 1}
+	db.Create(&b)
 }
 
-func createProperty(db *gorm.DB, i int) {
-	uuid, err := uuid.NewV4()
-
-	if err != nil {
-		panic(err)
-	}
-
-	propertyUUID := uuid.String()
-
-	property := models.Property{UUID: propertyUUID, Title: fmt.Sprintf("Test Property %s", strconv.Itoa(i)), Description: "Another great test property", PostalCode: fmt.Sprintf("SW19 %sAB", strconv.Itoa(i)), PricePerMonth: 1000}
-	db.NewRecord(property)
-	db.Create(&property)
-	db.NewRecord(property)
-
-	// Create 3 timeSlots per property
-	for j := 0; j < 3; j++ {
-		createTimeSlot(db, i, propertyUUID)
-	}
+func createUser(db *gorm.DB, i int) {
+	user := models.User{Email: fmt.Sprintf("test_%v@email.com", i)}
+	db.Create(&user)
 	return
 }
 
-func createTimeSlot(db *gorm.DB, i int, propertyUUID string) {
-	exampleTime, err := time.Parse(time.RFC822, "21 Feb 18 10:00 UTC")
-	if err != nil {
-		panic(err)
-	}
+func createFriendships(db *gorm.DB, i int) {
+	f := models.Friendship{RequesterId: i, ReceiverId: i + 1}
+	db.NewRecord(f)
+	db.Create(&f)
+	db.NewRecord(f)
+	return
+}
 
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		panic(err)
-	}
+func createNotificationSubs(db *gorm.DB, i int) {
+	ns := models.NotificationSubscription{SubscriberId: i, PublisherId: i + 1}
+	db.NewRecord(ns)
+	db.Create(&ns)
+	db.NewRecord(ns)
+	return
+}
 
-	tsUUID := uuid.String()
-
-	ts := models.TimeSlot{UUID: tsUUID, DateTime: exampleTime, Available: true, PropertyUUID: propertyUUID}
-	db.NewRecord(ts)
-	db.Create(&ts)
-	db.NewRecord(ts)
+func createBlock(db *gorm.DB, i int) {
+	b := models.Block{RequesterId: i, BlockedId: i + 1}
+	db.NewRecord(b)
+	db.Create(&b)
+	db.NewRecord(b)
 	return
 }
 
