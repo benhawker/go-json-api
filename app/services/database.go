@@ -14,15 +14,9 @@ type Database struct {
 }
 
 func ConnectToDatabase() *gorm.DB {
-	connectionString := fmt.Sprintf(
-		"host=%s user=%s dbname=%s sslmode=%s password=%s",
-		"localhost",
-		"benh",
-		"gojsonapitest",
-		"disable",
-		"password")
+	var dbURL = revel.Config.StringDefault("db.url", "")
 
-	db, err := gorm.Open("postgres", connectionString)
+	db, err := gorm.Open("postgres", dbURL)
 	if err != nil {
 
 		panic(err)
