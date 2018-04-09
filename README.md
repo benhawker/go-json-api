@@ -32,7 +32,7 @@ Install PQ
 go get github.com/lib/pq
 ```
 
-CLone the repo
+Clone the repo
 ```
 git@github.com:benhawker/go-json-api.git
 ```
