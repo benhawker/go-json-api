@@ -48,6 +48,14 @@ revel run
 ```
 
 
+Heroku setup:
+
+Add Heroku buildpack using go1.10.1
+```
+heroku buildpack:add https://github.com/benhawker/heroku-buildpack-go-revel
+```
+
+
 ### Other Approaches
 
 Another approach may include using a Table that makes use of Single Table Inheritance. Example:
